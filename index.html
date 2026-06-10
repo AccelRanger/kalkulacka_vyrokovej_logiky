@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pravdivostná tabuľka</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: #0e0e14;
+      color: #d4d4dc;
+      font-family: 'JetBrains Mono', 'Fira Mono', 'Courier New', monospace;
+      padding: 2.5rem 1.25rem;
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #6b6b82;
+      margin-bottom: 0.4rem;
+    }
+
+    h1 {
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: #e8e8f0;
+      margin-bottom: 2rem;
+    }
+
+    .panel {
+      background: #16161f;
+      border: 1px solid #2a2a3a;
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .symbols {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .sym-btn {
+      background: #1e1e2e;
+      border: 1px solid #3a3a4e;
+      border-radius: 6px;
+      color: #a0a8ff;
+      font-size: 1rem;
+      padding: 0.25rem 0.65rem;
+      cursor: pointer;
+      font-family: inherit;
+      line-height: 1.6;
+      transition: background 0.15s;
+    }
+    .sym-btn:hover { background: #2a2a42; }
+
+    .input-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    #expr {
+      flex: 1;
+      background: #0e0e14;
+      border: 1px solid #3a3a4e;
+      border-radius: 7px;
+      color: #e8e8f0;
+      font-size: 1.05rem;
+      padding: 0.55rem 0.85rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    #expr:focus { border-color: #4f46e5; }
+
+    #calc-btn {
+      background: #4f46e5;
+      border: none;
+      border-radius: 7px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.95rem;
+      padding: 0.55rem 1.2rem;
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      transition: background 0.15s;
+    }
+    #calc-btn:hover { background: #4338ca; }
+
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+    }
+
+    .preset-btn {
+      background: #1e1e2e;
+      border: 1px solid #2e2e40;
+      border-radius: 5px;
+      color: #8888a8;
+      font-size: 0.78rem;
+      padding: 0.2rem 0.55rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .preset-btn:hover { color: #a0a8ff; border-color: #4f46e5; }
+
+    .legend {
+      font-size: 0.72rem;
+      color: #55556a;
+      margin-bottom: 1.5rem;
+      line-height: 1.9;
+    }
+    .legend strong { color: #6b6b82; }
+
+    #error {
+      display: none;
+      background: #2a0e0e;
+      border: 1px solid #7f1d1d;
+      border-radius: 8px;
+      color: #fca5a5;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    #result { display: none; }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .result-label { font-size: 0.8rem; color: #6b6b82; }
+
+    #result-expr { font-size: 1rem; color: #a0a8ff; }
+
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.15rem 0.65rem;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .badge-taut  { background: rgba(16,185,129,.15); color: #6ee7b7; border: 1px solid #065f46; }
+    .badge-cont  { background: rgba(239,68,68,.15);  color: #fca5a5; border: 1px solid #7f1d1d; }
+    .badge-konti { background: rgba(245,158,11,.15); color: #fcd34d; border: 1px solid #78350f; }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid #2a2a3a;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+
+    thead tr { background: #13131c; }
+
+    th {
+      padding: 0.65rem 1.1rem;
+      color: #8888cc;
+      border-bottom: 1px solid #2a2a3a;
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+
+    th.result-col {
+      color: #a0a8ff;
+      border-left: 1px solid #2a2a3a;
+      background: #1a1a28;
+      font-weight: 700;
+    }
+
+    td {
+      padding: 0.55rem 1.1rem;
+      text-align: center;
+      border-bottom: 1px solid #1e1e2a;
+      font-weight: 600;
+    }
+
+    td.result-col {
+      border-left: 1px solid #2a2a3a;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .val-t { color: #4ade80; }
+    .val-f { color: #f87171; }
+
+    .row-even { background: #0e0e14; }
+    .row-odd  { background: #12121c; }
+    .row-even td.result-col { background: #14142a; }
+    .row-odd  td.result-col { background: #1a1a30; }
+
+    .table-footer {
+      margin-top: 0.75rem;
+      font-size: 0.72rem;
+      color: #44445a;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="eyebrow">Výroková logika</div>
+  <h1>Pravdivostná tabuľka</h1>
+
+  <div class="panel">
+    <div class="symbols">
+      <button class="sym-btn" onclick="ins('¬')">¬</button>
+      <button class="sym-btn" onclick="ins('∧')">∧</button>
+      <button class="sym-btn" onclick="ins('∨')">∨</button>
+      <button class="sym-btn" onclick="ins('→')">→</button>
+      <button class="sym-btn" onclick="ins('↔')">↔</button>
+      <button class="sym-btn" onclick="ins('(')"> ( </button>
+      <button class="sym-btn" onclick="ins(')')"> ) </button>
+    </div>
+
+    <div class="input-row">
+      <input id="expr" type="text" value="A → B" placeholder="napr. (A → B) ∧ ¬B"
+             onkeydown="if(event.key==='Enter') compute()" />
+      <button id="calc-btn" onclick="compute()">Vypočítaj</button>
+    </div>
+
+    <div class="presets">
+      <button class="preset-btn" onclick="load('A ∧ B')">A ∧ B</button>
+      <button class="preset-btn" onclick="load('A ∨ B')">A ∨ B</button>
+      <button class="preset-btn" onclick="load('A → B')">A → B</button>
+      <button class="preset-btn" onclick="load('A ↔ B')">A ↔ B</button>
+      <button class="preset-btn" onclick="load('¬A ∨ B')">¬A ∨ B</button>
+      <button class="preset-btn" onclick="load('(A ∧ B) → C')">(A ∧ B) → C</button>
+      <button class="preset-btn" onclick="load('(A → B) ∧ (B → C) → (A → C)')">(A→B)∧(B→C)→(A→C)</button>
+    </div>
+  </div>
+
+  <div class="legend">
+    <strong>Operátory:</strong>
+    ¬ ~ ! = negácia &nbsp;|&nbsp;
+    ∧ &amp; = konjunkcia &nbsp;|&nbsp;
+    ∨ | = disjunkcia &nbsp;|&nbsp;
+    → -&gt; = implikácia &nbsp;|&nbsp;
+    ↔ &lt;-&gt; = ekvivalencia
+  </div>
+
+  <div id="error"></div>
+
+  <div id="result">
+    <div class="result-header">
+      <span class="result-label">Výsledok:</span>
+      <code id="result-expr"></code>
+      <span id="badge" class="badge"></span>
+    </div>
+    <div class="table-wrap">
+      <table id="table"></table>
+    </div>
+    <div class="table-footer" id="table-footer"></div>
+  </div>
+</div>
+
+<script>
+  // ── Tokenizer ──────────────────────────────────────────────
+  function tokenize(expr) {
+    const tokens = [];
+    let i = 0;
+    while (i < expr.length) {
+      if (/\s/.test(expr[i])) { i++; continue; }
+      if (expr[i] === '(') { tokens.push({ type: 'LPAREN' }); i++; }
+      else if (expr[i] === ')') { tokens.push({ type: 'RPAREN' }); i++; }
+      else if ('¬~!'.includes(expr[i])) { tokens.push({ type: 'NOT' }); i++; }
+      else if (expr[i] === '∧' || expr[i] === '&') { tokens.push({ type: 'AND' }); i++; }
+      else if (expr[i] === '∨' || expr[i] === '|') { tokens.push({ type: 'OR' }); i++; }
+      else if (expr[i] === '→') { tokens.push({ type: 'IMP' }); i++; }
+      else if (expr[i] === '-' && expr[i+1] === '>') { tokens.push({ type: 'IMP' }); i += 2; }
+      else if (expr[i] === '↔') { tokens.push({ type: 'IFF' }); i++; }
+      else if (expr[i] === '<' && expr[i+1] === '-' && expr[i+2] === '>') { tokens.push({ type: 'IFF' }); i += 3; }
+      else if (/[A-Za-z]/.test(expr[i])) {
+        let name = '';
+        while (i < expr.length && /[A-Za-z0-9_]/.test(expr[i])) name += expr[i++];
+        tokens.push({ type: 'VAR', name });
+      } else {
+        throw new Error('Neznámy znak: ' + expr[i]);
+      }
+    }
+    return tokens;
+  }
+
+  // ── Parser ─────────────────────────────────────────────────
+  function parse(tokens) {
+    let pos = 0;
+    const peek = () => tokens[pos];
+    const consume = () => tokens[pos++];
+    function expect(type) {
+      const t = consume();
+      if (!t || t.type !== type) throw new Error('Očakávaný token: ' + type);
+      return t;
+    }
+    function parseIff() {
+      let l = parseImp();
+      while (peek()?.type === 'IFF') { consume(); l = { op:'IFF', left:l, right:parseImp() }; }
+      return l;
+    }
+    function parseImp() {
+      let l = parseOr();
+      while (peek()?.type === 'IMP') { consume(); l = { op:'IMP', left:l, right:parseOr() }; }
+      return l;
+    }
+    function parseOr() {
+      let l = parseAnd();
+      while (peek()?.type === 'OR') { consume(); l = { op:'OR', left:l, right:parseAnd() }; }
+      return l;
+    }
+    function parseAnd() {
+      let l = parseNot();
+      while (peek()?.type === 'AND') { consume(); l = { op:'AND', left:l, right:parseNot() }; }
+      return l;
+    }
+    function parseNot() {
+      if (peek()?.type === 'NOT') { consume(); return { op:'NOT', arg:parseNot() }; }
+      return parseAtom();
+    }
+    function parseAtom() {
+      const t = peek();
+      if (!t) throw new Error('Neočakávaný koniec výrazu');
+      if (t.type === 'LPAREN') { consume(); const inner = parseIff(); expect('RPAREN'); return inner; }
+      if (t.type === 'VAR') { consume(); return { op:'VAR', name:t.name }; }
+      throw new Error('Neočakávaný token: ' + t.type);
+    }
+    const tree = parseIff();
+    if (pos < tokens.length) throw new Error('Nadbytočné znaky vo výraze');
+    return tree;
+  }
+
+  function getVars(node, vars = new Set()) {
+    if (!node) return vars;
+    if (node.op === 'VAR') { vars.add(node.name); return vars; }
+    if (node.op === 'NOT') return getVars(node.arg, vars);
+    getVars(node.left, vars); getVars(node.right, vars);
+    return vars;
+  }
+
+  function evaluate(node, env) {
+    if (node.op === 'VAR') return env[node.name];
+    if (node.op === 'NOT') return !evaluate(node.arg, env);
+    if (node.op === 'AND') return evaluate(node.left, env) && evaluate(node.right, env);
+    if (node.op === 'OR')  return evaluate(node.left, env) || evaluate(node.right, env);
+    if (node.op === 'IMP') return !evaluate(node.left, env) || evaluate(node.right, env);
+    if (node.op === 'IFF') return evaluate(node.left, env) === evaluate(node.right, env);
+  }
+
+  // ── UI ─────────────────────────────────────────────────────
+  function ins(sym) {
+    const el = document.getElementById('expr');
+    el.value += sym;
+    el.focus();
+  }
+
+  function load(val) {
+    document.getElementById('expr').value = val;
+    compute();
+  }
+
+  function cell(val) {
+    return `<td class="${val ? 'val-t' : 'val-f'}">${val ? 'P' : 'N'}</td>`;
+  }
+
+  function compute() {
+    const expr = document.getElementById('expr').value.trim();
+    const errEl = document.getElementById('error');
+    const resEl = document.getElementById('result');
+
+    try {
+      const tokens = tokenize(expr);
+      const tree = parse(tokens);
+      const vars = Array.from(getVars(tree)).sort();
+      const n = vars.length;
+      if (n === 0) throw new Error('Výraz neobsahuje žiadne premenné');
+      if (n > 6) throw new Error('Príliš veľa premenných (max 6)');
+
+      const rows = [];
+      for (let mask = 0; mask < 2 ** n; mask++) {
+        const env = {};
+        vars.forEach((v, i) => { env[v] = Boolean((mask >> (n - 1 - i)) & 1); });
+        rows.push({ env, val: evaluate(tree, env) });
+      }
+
+      const allTrue  = rows.every(r => r.val);
+      const allFalse = rows.every(r => !r.val);
+      const cls = allTrue ? 'tautológia' : allFalse ? 'kontradikcia' : 'kontingencia';
+      const badgeCls = allTrue ? 'badge-taut' : allFalse ? 'badge-cont' : 'badge-konti';
+
+      // header
+      document.getElementById('result-expr').textContent = expr;
+      const badge = document.getElementById('badge');
+      badge.textContent = cls;
+      badge.className = 'badge ' + badgeCls;
+
+      // table
+      let html = '<thead><tr>';
+      vars.forEach(v => { html += `<th>${v}</th>`; });
+      html += `<th class="result-col">${expr}</th></tr></thead><tbody>`;
+
+      rows.forEach((row, i) => {
+        const cls = i % 2 === 0 ? 'row-even' : 'row-odd';
+        html += `<tr class="${cls}">`;
+        vars.forEach(v => { html += cell(row.env[v]); });
+        html += `<td class="result-col ${row.val ? 'val-t' : 'val-f'}">${row.val ? 'P' : 'N'}</td>`;
+        html += '</tr>';
+      });
+      html += '</tbody>';
+
+      document.getElementById('table').innerHTML = html;
+      document.getElementById('table-footer').textContent =
+        `P = pravda · N = nepravda · ${rows.length} riadkov`;
+
+      errEl.style.display = 'none';
+      resEl.style.display = 'block';
+
+    } catch (e) {
+      errEl.textContent = '⚠ ' + e.message;
+      errEl.style.display = 'block';
+      resEl.style.display = 'none';
+    }
+  }
+
+  // compute on load
+  compute();
+</script>
+</body>
+</html>
